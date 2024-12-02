@@ -9,6 +9,8 @@ def parse_args():
 
     parser.add_argument('filename',
                         help='input filename')
+    parser.add_argument('-2', '--part2', action='store_true', default=False,
+                        help='perform part 2 of the puzzle!')
 
     args = parser.parse_args()
 
@@ -43,7 +45,20 @@ def check_report_magnitude(report):
     return True
 
 
-def count_safe_reports(reports):
+def safe_with_a_removal(report):
+    """Returns whether the report would be safe if 1 level was removed"""
+
+    for i in range(len(report)):
+
+        new_report = report[:i] + report[i+1:]
+
+        if check_report_crease(new_report) and check_report_magnitude(new_report):
+            return True
+
+    return False
+
+
+def count_safe_reports(reports, part2):
     """Returns the number of safe reports"""
 
     safe_count = 0
@@ -52,16 +67,18 @@ def count_safe_reports(reports):
 
         if check_report_crease(report) and check_report_magnitude(report):
             safe_count += 1
+        elif part2 and safe_with_a_removal(report):
+            safe_count += 1
 
     return safe_count
 
 
-def cli_main(filename):
+def cli_main(filename, part2):
     """main entry"""
 
     reports = read_input_reports(filename)
 
-    safe_reports = count_safe_reports(reports)
+    safe_reports = count_safe_reports(reports, part2)
 
     print('%d safe reports found' % safe_reports)
 
@@ -69,6 +86,6 @@ def cli_main(filename):
 if __name__ == '__main__':
 
     args = parse_args()
-    cli_main(args.filename)
+    cli_main(args.filename, args.part2)
 
 
