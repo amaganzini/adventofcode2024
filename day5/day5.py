@@ -18,6 +18,37 @@ def parse_args():
     return args
 
 
+def correct_invalid_update(rules, update):
+    """Returns a corrected update based on the rules"""
+
+    corrected_update = update.copy()
+
+    for early, late in rules.items():
+
+        #if the early part of the rule is in the update
+        if early in corrected_update:
+            early_index = corrected_update.index(early)
+
+            #make sure every late val is after it
+            for late_val in late:
+
+                if late_val in corrected_update:
+
+                    late_index = corrected_update.index(late_val)
+
+                    #if we find an offending late
+                    if late_index < early_index:
+
+                        #we need to move the early in front!
+                        corrected_update.pop(early_index)
+                        corrected_update.insert(corrected_update.index(late_val), early)
+                        
+                        #update early_index since we still need it
+                        early_index = corrected_update.index(early)
+                        
+    return corrected_update
+
+
 def check_valid_update(rules, update):
     """Returns if an update is valid"""
 
@@ -29,22 +60,29 @@ def check_valid_update(rules, update):
 
             #make sure every late val is after it
             for late_val in late:
+
                 if late_val in update and update.index(late_val) < early_index:
                     return False
 
     return True
 
 
-def count_valid_middle_update_numbers(rules, updates):
-    """Returns the sum of all the valid update's middle number"""
+def count_valid_middle_update_numbers(rules, updates, corrected_only):
+    """Returns the sum of all the valid update's middle numbers"""
 
     total = 0
 
     for update in updates:
 
-        if check_valid_update(rules, update):
-            #add the middle value in update
-            total += int(update[int(len(update)/2)])
+        if corrected_only:
+            if not check_valid_update(rules, update):
+                corrected_update = correct_invalid_update(rules, update)
+                total += int(corrected_update[int(len(corrected_update)/2)])
+
+        else:
+            if check_valid_update(rules, update):
+                #add the middle value in update
+                total += int(update[int(len(update)/2)])
 
     return total
 
@@ -87,10 +125,9 @@ def cli_main(args):
 
     rules, updates = read_rules_and_updates(args.filename)
 
-    value = count_valid_middle_update_numbers(rules, updates)
-    #breakpoint()
+    value = count_valid_middle_update_numbers(rules, updates, args.part2)
 
-    print('Total sum of valid middle updates: %d' % value)
+    print('Total sum of %s middle updates: %d' % ('invalid corrected' if args.part2 else 'valid', value))
 
 
 if __name__ == '__main__':
